@@ -1,0 +1,123 @@
+<script src="table.js"></script>
+<script>
+function run(){
+	var now = new Date()
+	if(tasks[0].creation_date == 0){
+		tasks[0].creation_date = now;
+	}
+	var i = tasks[0].sessions.length;
+	tasks[0].sessions[i] = new Object();
+	tasks[0].sessions[i].begin = now;
+	tasks[0].sessions[i].end = 0;
+	tasks[0].sessions[i].duration = 0;
+}
+function create_subtask(n,r,t){
+	var id = tasks.length;
+	tasks[id] = new Object();
+	tasks[id].name = n;
+	tasks[id].reason = r;
+	tasks[id].type=t;
+	tasks[id].creation_date = new Date();
+	tasks[id].parent_id = current_task;
+	tasks[id].id = id;
+	tasks[id].time_spended = 0;
+	tasks[id].sessions = [];
+	tasks[id].subtasks = [];
+
+	var i = tasks[current_task].subtasks.length;
+	tasks[current_task].subtasks[i] = id;
+}
+function switch_to_subtask(s_id){
+	var m = 0;
+	for(var i =0 ; i < tasks[current_task].subtasks.length; i++){
+		if(tasks[current_task].subtasks[i] == s_id){
+			m = 1;
+			break;
+		}
+	}
+	if(m == 0) alert("!");
+	else{
+		current_task = s_id;
+		var i = tasks[current_task].sessions.length;
+		tasks[current_task].sessions[i] = new Object();
+		tasks[current_task].sessions[i].begin = new Date();
+		tasks[current_task].sessions[i].end = 0;
+		tasks[current_task].sessions[i].duration = 0;
+		tree.array[tree.count] = s_id;
+		tree.count++;
+	}
+}
+function close_subtask(r){
+	var i = tasks[current_task].sessions.length - 1;
+	if(tree.count <= 1){
+		return -1;
+	}
+	tasks[current_task].sessions[i].end = new Date();
+	var session_time = tasks[current_task].sessions[i].end - tasks[current_task].sessions[i].begin;
+	tasks[current_task].sessions[i].duration = session_time;
+	tasks[current_task].time_spended += session_time;
+	tree.count--;
+	current_task = tree.array[tree.count - 1];
+	return 0;
+}
+function finish_tasks(){
+	var r = -1;
+	do{
+		r = close_subtask("");
+	}while(r != -1);
+	var i = tasks[0].sessions.length - 1;
+	tasks[0].sessions[i].end = new Date();
+	var d = tasks[0].sessions[i].end - tasks[0].sessions[i].begin;
+	tasks[0].sessions[i].duration = d;
+	tasks[0].time_spended += d;
+}
+function save_table(){
+	var text = "var current_task=0;var tree=new Object({count:1,array:[0]});var tasks="
+		 + JSON.stringify(tasks) + ";";
+	blob = new Blob([text], { type: 'text/plain' }),
+	anchor = document.createElement('a');
+
+	anchor.download = "table.js";
+	anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+	anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+	anchor.click();
+}
+function show_tree(){
+	var t = "";
+	var id = 0;
+	for(var i = 0; i < tree.count; i++){
+		id = tree.array[i];
+ 		t += "<div id=task=" + id + ">" + tasks[id].name + "</div>";
+	}
+	t += "<div onclick=\"create_new_subtask(); reload();\">Click to add subtask</div>";
+	t += "<input type = text id=s_name>";
+	document.getElementById('tree').innerHTML = t;
+}
+function create_new_subtask(){
+	name = document.getElementById('s_name').value;
+	create_subtask(name,"reason","type");
+}
+function show_subtasks(){
+	var t = "";
+	var id = 0;
+	var o = tasks[current_task].subtasks;
+	for(var i = 0; i < o.length; i++){
+		id = o[i];
+ 		t += "<div id=task=" + id + " onclick=\"switch_to_subtask(" + id + "); reload();\">" + tasks[id].name + "</div>";
+	}
+	t += "<div\">Click on subtask to run it</div>"
+	document.getElementById('subtasks').innerHTML = t;
+}
+function reload(){
+	show_tree();
+	show_subtasks();
+}
+</script>
+<h1>Tree</h1><div id=tree></div>
+<h1>Subtasks</h1><div id=subtasks></div>
+<h1>Close</h1><div onclick="close_subtask();reload();">Click to close subtask</div>
+<h1>Finish</h1><div onclick="finish_tasks();save_table(); window.close();">Click to end all tasks and close tab</div>
+<script>
+run();
+reload();
+</script>
