@@ -1,58 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<style>
-.a_red:hover{
-	color: #FFAAAA;
-	background-color: #990000;
-}
-.b_red {
-	color: #FF0000;
-}
-.a_orange:hover{
-	color: #FF7FAA;
-	background-color: #994900;
-}
-.b_orange {
-	color: #FF7F00;
-}
-.a_yellow:hover{
-	color: #FFFFAA;
-	background-color: #999900;
-}
-.b_yellow {
-	color: #FFFF00;
-}
-.a_green:hover{
-	color: #AAFFAA;
-	background-color: #009900;
-}
-.b_green {
-	color: #00FF00;
-}
-.a_aqua:hover{
-	color: #AAFFFF;
-	background-color: #009999;
-}
-.b_aqua {
-	color: #00FFFF;
-}
-.a_blue:hover{
-	color: #AAAAFF;
-	background-color: #000099;
-}
-.b_blue {
-	color: #0000FF;
-}
-.a_purple:hover{
-	color: #FFAAFF;
-	background-color: #990099;
-}
-.b_purple {
-	color: #FF00FF;
-}
-</style>
 <script src="table.js"></script>
 <script>
 function period(){
@@ -147,24 +95,6 @@ function getDiv(T, F, C, id){
 	t +=">" + T + "</div>";
 	return t;	
 }
-function get_day(){
-	d = Math.floor((new Date()) / (1000*60*60*24));
-	return (init_shift + d) % 14;
-}
-var theme = {a:"a_green",b:"b_green"};
-function get_theme(d){
-	switch(d){
-		case 0: case 13: return {a:"a_red",b:"b_red"};
-		case 1: case 12: return {a:"a_orange",b:"b_orange"};
-		case 2: case 11: return {a:"a_yellow",b:"b_yellow"};
-		case 3: case 10: return {a:"a_green",b:"b_green"};
-		case 4: case 9: return {a:"a_aqua",b:"b_aqua"};
-		case 5: case 8: return {a:"a_blue",b:"b_blue"};
-		case 6: case 7: return {a:"a_purple",b:"b_purple"};
-	}
-	return theme;
-}
-theme = get_theme(get_day());
 var last = [];
 list_of_last_volume = 5;
 show_duration = -1;
@@ -326,7 +256,6 @@ function show_book(){
 	var t = "";
 	for(var i = 0; i < book.len; i++){
 		t += getDiv(formatHTML(tasks[book.list[i]].name), "switch_to_task(" + book.list[i] + "); reload();", "ab",book.list[i]);
-// 		t += "<div class=\"" + theme.a +" " + theme.b +"\" id=task" + book.list[i] + " onclick=\"switch_to_task(" + book.list[i] + "); reload();\">" + formatHTML(tasks[book.list[i]].name) + "</div>";
 	}
 	t += "<div\">Click on task to run it</div>"
 	document.getElementById('bookmarks').innerHTML = t;
@@ -366,7 +295,7 @@ function show_subtasks(){
 	var o = tasks[current_task].subtasks;
 	for(var i = 0; i < o.length; i++){
 		id = o[i];
-	t += getDiv(formatHTML(tasks[id].name) + ((show_duration==1)?("["+form_time(tasks[id].time_spended)+"]"):""), "switch_to_subtask(" + id + "); reload();", "ab",id);
+		t += getDiv(formatHTML(tasks[id].name) + ((show_duration==1)?("["+form_time(tasks[id].time_spended)+"]"):""), "switch_to_subtask(" + id + "); reload();", "ab",id);
 
 	}
 	t += "<div>Click on subtask to run it</div>"
