@@ -55,7 +55,98 @@
 </style>
 <script src="table.js"></script>
 <script>
-var init_shift = 11;
+function period(){
+	var T = 1000 * 60 * 60 * 24 * 7 * 2;
+	var I = 1000 * 60 * 60 * 24 * init_shift;
+	var d = ((new Date()-I) % T) / T;
+	return d;
+}
+function ZigZag(x){	
+	function a(xx){return (xx<0)?(-xx):xx;}
+	return 1 - a(2*x-1);
+}
+function getTheme(r){
+	var p = 5*r;
+	var t = Math.floor(p);
+	var f = p - t;
+	var th = {r: 1, g: 1, b: 1};
+	switch (t){
+		case 0: th = {r: 1, g: f, b: 0}; break;
+		case 1: th = {r: 1-f, g: 1, b: 0}; break;
+		case 2: th = {r: 0, g: 1, b: f}; break;
+		case 3: th = {r: 0, g: 1-f, b: 1}; break;
+		case 4: th = {r: f, g: 0, b: 1}; break;
+	}
+	return th;
+}
+function applyTheme(theme, high, low){
+	var r = Math.round(theme.r * (high - low) + low);
+	var g = Math.round(theme.g * (high - low) + low);
+	var b = Math.round(theme.b * (high - low) + low);
+	return {r: r, g: g, b: b};
+}
+var theme_ ;
+function initTheme(){
+	var tm = getTheme(ZigZag(period()));
+	theme_ = {
+		a : {
+			onMouseOver : {
+				color: applyTheme(tm, 0xFF, 0xAA),
+				backgroundColor: applyTheme(tm, 0x99, 0x00)
+			}
+		},
+		b : {
+			color: applyTheme(tm, 0xFF, 0x00),
+			backgroundColor: {r: 0xFF, g: 0xFF, b: 0xFF}
+		},
+		ab : {
+			color: applyTheme(tm, 0xFF, 0x00),
+			backgroundColor: {r: 0xFF, g: 0xFF, b: 0xFF},
+			onMouseOver : {
+				color: applyTheme(tm, 0xFF, 0xAA),
+				backgroundColor: applyTheme(tm, 0x99, 0x00)
+			}
+		},
+	}
+	return tm;
+}
+
+var init_shift = 16;
+function textRGB(o,def){
+	var re = "";
+	if(def == 0){ re = "rgb(0, 0, 0)";}
+	else if (def == 1){ re = "rgb(255, 255, 255)";}
+	if(o != undefined){
+		re = "rgb(" + o.r + ", " + o.g + ", " + o.b + ")";
+	}
+	return re;
+}
+function getStyle(color, backgroundColor){
+	re = "color: "+ textRGB(color,0) +"; background-color:" + textRGB(backgroundColor,1) + ";"
+	return re;
+}
+function getDiv(T, F, C, id){
+	var style = getStyle(theme_[C].color, theme_[C].backgroundColor);
+	var hoverStyle = "";
+	if(theme_[C].onMouseOver != undefined){
+		var hoverStyle = getStyle(theme_[C].onMouseOver.color, theme_[C].onMouseOver.backgroundColor)
+	}
+	var t = "";
+	t += "<div";
+	t += " style=\"" + style + "\"";
+	if(hoverStyle != ""){
+		t += " onMouseOver=\"this.style='" + hoverStyle + "'\"";
+		t += " onMouseOut=\"this.style='" + style + "'\"";
+	}
+	if(id != undefined){
+		t += " id=task" + id;
+	}
+	if( F != undefined){
+		t += " onclick=\"" + F + "\"";
+	}
+	t +=">" + T + "</div>";
+	return t;	
+}
 function get_day(){
 	d = Math.floor((new Date()) / (1000*60*60*24));
 	return (init_shift + d) % 14;
@@ -234,7 +325,8 @@ function bookmark(){
 function show_book(){
 	var t = "";
 	for(var i = 0; i < book.len; i++){
- 		t += "<div class=\"" + theme.a +" " + theme.b +"\" id=task" + book.list[i] + " onclick=\"switch_to_task(" + book.list[i] + "); reload();\">" + formatHTML(tasks[book.list[i]].name) + "</div>";
+		t += getDiv(formatHTML(tasks[book.list[i]].name), "switch_to_task(" + book.list[i] + "); reload();", "ab",book.list[i]);
+// 		t += "<div class=\"" + theme.a +" " + theme.b +"\" id=task" + book.list[i] + " onclick=\"switch_to_task(" + book.list[i] + "); reload();\">" + formatHTML(tasks[book.list[i]].name) + "</div>";
 	}
 	t += "<div\">Click on task to run it</div>"
 	document.getElementById('bookmarks').innerHTML = t;
@@ -259,12 +351,12 @@ function formatHTML(a){
 function show_tree(){
 	var t = "";
 	var id = 0;
-	t += "<div class=" + theme.a +" onclick=\"bookmark(); reload();\">Click to bookmark</div>";
+	t += getDiv("Click to bookmark", "bookmark(); reload();", "a");
 	for(var i = 0; i < tree.count; i++){
 		id = tree.array[i];
- 		t += "<div class=" + theme.b +" id=task" + id + ">" + formatHTML(tasks[id].name) + "</div>";
+		t += getDiv(formatHTML(tasks[id].name), "", "b", id);
 	}
-	t += "<div class=" + theme.a +" onclick=\"create_new_subtask(); reload();\">Click to add subtask</div>";
+	t += getDiv("Click to add subtask", "create_new_subtask(); reload();", "a");
 	t += "<input type = text id=s_name>";
 	document.getElementById('tree').innerHTML = t;
 }
@@ -274,44 +366,47 @@ function show_subtasks(){
 	var o = tasks[current_task].subtasks;
 	for(var i = 0; i < o.length; i++){
 		id = o[i];
- 		t += "<div class=\"" + theme.a +" " + theme.b +"\" id=task" + id + " onclick=\"switch_to_subtask(" + id + "); reload();\">" + formatHTML(tasks[id].name) + ((show_duration==1)?("["+form_time(tasks[id].time_spended)+"]"):"") + "</div>";
+	t += getDiv(formatHTML(tasks[id].name) + ((show_duration==1)?("["+form_time(tasks[id].time_spended)+"]"):""), "switch_to_subtask(" + id + "); reload();", "ab",id);
+
 	}
-	t += "<div\">Click on subtask to run it</div>"
+	t += "<div>Click on subtask to run it</div>"
 	document.getElementById('subtasks').innerHTML = t;
 }
 function show_table(){
 	var t = "";
 	for(var i = 0; i < tasks.length; i++){
- 		t += "<div class=\"" + theme.a +" " + theme.b +"\" id=task" + i + " onclick=\"switch_to_task(" + i + "); reload();\">" + formatHTML(tasks[i].name) + "</div>";
+		t += getDiv(formatHTML(tasks[i].name), "switch_to_task(" + i + "); reload();", "ab",i);
 	}
-	t += "<div\">Click on task to run it</div>"
+	t += "<div>Click on task to run it</div>"
 	document.getElementById('table').innerHTML = t;
 }
 function show_latest(){
 	var t = "";
 	for(var i = 0; i < last.length; i++){
- 		t += "<div class=\"" + theme.a +" " + theme.b +"\" id=task" + last[i] + " onclick=\"switch_to_task(" + last[i] + "); reload();\">" + formatHTML(tasks[last[i]].name) + "</div>";
+		t += getDiv(formatHTML(tasks[last[i]].name), "switch_to_task(" + last[i] + "); reload();", "ab",last[i]);
 	}
-	t += "<div\">Click on task to run it</div>"
+	t += "<div>Click on task to run it</div>"
 	document.getElementById('latest').innerHTML = t;
 }
 function show_finish(){
 	var t = "";
-	t += "<div class=" + theme.a +" onclick=\"finish_tasks();save_table();\">Click to end all tasks and close tab</div>";
+	t += getDiv("Click to end all tasks and close tab", "finish_tasks();save_table();", "a");
 	document.getElementById('finish').innerHTML = t;
 }
 function show_current(){
 	var pp = [5,15,30,60];
 	var t = "";
-	t += "<div class=" + theme.a +" onclick=\"close_subtask();reload();\">Click to close subtask</div>";
+	t += getDiv("Click to close subtask", "close_subtask();reload();", "a");
 	for(var i = 0; i < pp.length; i++){
-		t += "<div class=" + theme.a +" onclick=\"close_subtask_and_remind(" + pp[i] + "*60*1000);reload();\">Click to close subtask and remind after ";
-		if(pp[i] < 60) t += pp[i] + " min</div>";
-		else if(pp[i] == 60) t += "1 hour</div>";
+		var z = ""
+		if(pp[i] < 60) z = pp[i] + " min";
+		else if(pp[i] == 60) z = "1 hour";
+		t += getDiv("Click to close subtask and remind after " + z, "close_subtask_and_remind(" + pp[i] + "*60*1000);reload();", "a");
 	}
 	document.getElementById('current').innerHTML = t;
 }
 function reload(){
+	initTheme();
 	show_book();
 	show_latest();
 	show_tree();
@@ -320,6 +415,7 @@ function reload(){
 	show_finish();
 	show_current();
 }
+initTheme();
 </script>
 </head>
 <body>
