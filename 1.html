@@ -13,6 +13,9 @@ function ZigZag(x){
 	function a(xx){return (xx<0)?(-xx):xx;}
 	return 1 - a(2*x-1);
 }
+function One2OneCos(x){	
+	return (1-Math.cos(2*Math.PI*x))/2;
+}
 function getTheme(r){
 	var p = 5*r;
 	var t = Math.floor(p);
@@ -35,7 +38,7 @@ function applyTheme(theme, high, low){
 }
 var theme_ ;
 function initTheme(){
-	var tm = getTheme(ZigZag(period()));
+	var tm = getTheme(One2OneCos(period()));
 	theme_ = {
 		a : {
 			onMouseOver : {
@@ -59,7 +62,7 @@ function initTheme(){
 	return tm;
 }
 
-var init_shift = 16;
+var init_shift = 16.5;
 function textRGB(o,def){
 	var re = "";
 	if(def == 0){ re = "rgb(0, 0, 0)";}
